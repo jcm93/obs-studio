@@ -25,6 +25,11 @@ typedef enum {
 	ScreenCaptureApplicationStream = 2,
 } ScreenCaptureStreamType;
 
+typedef enum {
+	ScreenCaptureAudioDesktopStream = 0,     //rename
+	ScreenCaptureAudioApplicationStream = 1, //rename
+} ScreenCaptureAudioStreamType;
+
 @interface ScreenCaptureDelegate : NSObject <SCStreamOutput>
 
 @property struct screen_capture *sc;
