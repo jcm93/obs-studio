@@ -490,11 +490,9 @@ static int send_packet_ex(struct rtmp_stream *stream,
 		return -1;
 
 	if (is_header) {
-		flv_packet_start(packet, stream->video_codec,
-				 stream->start_dts_offset, &data, &size);
+		flv_packet_start(packet, stream->video_codec, &data, &size);
 	} else if (is_footer) {
-		flv_packet_end(packet, stream->video_codec,
-			       stream->start_dts_offset, &data, &size);
+		flv_packet_end(packet, stream->video_codec, &data, &size);
 	} else {
 		flv_packet_frames(packet, stream->video_codec,
 				  stream->start_dts_offset, &data, &size);
@@ -1359,6 +1357,8 @@ static bool init_connect(struct rtmp_stream *stream)
 	caps = obs_encoder_get_caps(venc);
 	if ((caps & OBS_ENCODER_CAP_DYN_BITRATE) == 0) {
 		stream->dbr_enabled = false;
+		info("Dynamic bitrate disabled. "
+		     "The encoder does not support on-the-fly bitrate reconfiguration.");
 	}
 
 	if (obs_output_get_delay(stream->output) != 0) {

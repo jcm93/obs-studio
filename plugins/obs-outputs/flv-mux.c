@@ -339,7 +339,8 @@ void flv_packet_ex(struct encoder_packet *packet, enum video_id_t codec_id,
 	s_wb24(&s, 0); // always 0
 
 	// packet ext header
-	s_w8(&s, FRAME_HEADER_EX | type | (packet->keyframe ? FT_KEY : 0));
+	s_w8(&s,
+	     FRAME_HEADER_EX | type | (packet->keyframe ? FT_KEY : FT_INTER));
 	s_w4cc(&s, codec_id);
 
 #ifdef ENABLE_HEVC
@@ -360,10 +361,9 @@ void flv_packet_ex(struct encoder_packet *packet, enum video_id_t codec_id,
 }
 
 void flv_packet_start(struct encoder_packet *packet, enum video_id_t codec,
-		      int32_t dts_offset, uint8_t **output, size_t *size)
+		      uint8_t **output, size_t *size)
 {
-	flv_packet_ex(packet, codec, dts_offset, output, size,
-		      PACKETTYPE_SEQ_START);
+	flv_packet_ex(packet, codec, 0, output, size, PACKETTYPE_SEQ_START);
 }
 
 void flv_packet_frames(struct encoder_packet *packet, enum video_id_t codec,
@@ -380,10 +380,9 @@ void flv_packet_frames(struct encoder_packet *packet, enum video_id_t codec,
 }
 
 void flv_packet_end(struct encoder_packet *packet, enum video_id_t codec,
-		    int32_t dts_offset, uint8_t **output, size_t *size)
+		    uint8_t **output, size_t *size)
 {
-	flv_packet_ex(packet, codec, dts_offset, output, size,
-		      PACKETTYPE_SEQ_END);
+	flv_packet_ex(packet, codec, 0, output, size, PACKETTYPE_SEQ_END);
 }
 
 void flv_packet_metadata(enum video_id_t codec_id, uint8_t **output,
