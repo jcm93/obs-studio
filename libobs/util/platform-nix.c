@@ -312,6 +312,14 @@ int os_get_config_path(char *dst, size_t size, const char *name)
 #endif
 }
 
+char *os_get_username_ptr()
+{
+	size_t len = _POSIX_LOGIN_NAME_MAX;
+	char *username_ptr = bmalloc(len + 1);
+	getlogin_r(username_ptr, len);
+	return username_ptr;
+}
+
 /* should return $HOME/.[name], or when using XDG,
  * should return $HOME/.config/[name] as default */
 char *os_get_config_path_ptr(const char *name)
