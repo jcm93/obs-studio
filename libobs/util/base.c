@@ -19,6 +19,7 @@
 
 #include "c99defs.h"
 #include "base.h"
+#include "platform.h"
 
 static int crashing = 0;
 static void *log_param = NULL;

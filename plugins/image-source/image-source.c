@@ -62,8 +62,11 @@ static void image_source_load(struct image_source *context)
 		gs_image_file4_init_texture(&context->if4);
 		obs_leave_graphics();
 
-		if (!context->if4.image3.image2.image.loaded)
-			warn("failed to load texture '%s'", file);
+        if (!context->if4.image3.image2.image.loaded) {
+            char *redacted_file = os_create_redacted_str(file);
+            warn("failed to load texture '%s'", file);
+            free(redacted_file);
+        }
 	}
 }
 

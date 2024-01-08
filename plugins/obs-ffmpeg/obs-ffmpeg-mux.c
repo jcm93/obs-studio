@@ -469,7 +469,9 @@ static inline bool ffmpeg_mux_start_internal(struct ffmpeg_muxer *stream,
 	stream->total_bytes = 0;
 	obs_output_begin_data_capture(stream->output, 0);
 
-	info("Writing file '%s'...", stream->path.array);
+    char *redacted_path = os_create_redacted_str(stream->path.array);
+	info("Writing file '%s'...", redacted_path);
+    bfree(redacted_path);
 	return true;
 }
 
@@ -504,10 +506,11 @@ int deactivate(struct ffmpeg_muxer *stream, int code)
 		os_atomic_set_bool(&stream->active, false);
 		os_atomic_set_bool(&stream->sent_headers, false);
 
-		info("Output of file '%s' stopped",
-		     dstr_is_empty(&stream->printable_path)
-			     ? stream->path.array
-			     : stream->printable_path.array);
+        char *redacted_path = dstr_is_empty(&stream->printable_path)
+            ? os_create_redacted_str(stream->path.array)
+            : os_create_redacted_str(stream->printable_path.array);
+		info("Output of file '%s' stopped", redacted_path);
+        bfree(redacted_path);
 	}
 
 	if (code) {
@@ -785,7 +788,9 @@ static bool prepare_split_file(struct ffmpeg_muxer *stream,
 			       struct encoder_packet *packet)
 {
 	generate_filename(stream, &stream->path, stream->allow_overwrite);
-	info("Changing output file to '%s'", stream->path.array);
+    char *redacted_filename = os_create_redacted_str(stream->path.array);
+	info("Changing output file to '%s'", redacted_filename);
+    bfree(redacted_filename);
 
 	if (!send_new_filename(stream, stream->path.array)) {
 		warn("Failed to send new file name");
@@ -1156,6 +1161,8 @@ static void *replay_buffer_mux_thread(void *data)
 	bool error = false;
 
 	start_pipe(stream, stream->path.array);
+    
+    char *redacted_path = os_create_redacted_str(stream->path.array);
 
 	if (!stream->pipe) {
 		warn("Failed to create process pipe");
@@ -1165,7 +1172,7 @@ static void *replay_buffer_mux_thread(void *data)
 
 	if (!send_headers(stream)) {
 		warn("Could not write headers for file '%s'",
-		     stream->path.array);
+		     redacted_path);
 		error = true;
 		goto error;
 	}
@@ -1174,14 +1181,14 @@ static void *replay_buffer_mux_thread(void *data)
 		struct encoder_packet *pkt = &stream->mux_packets.array[i];
 		if (!write_packet(stream, pkt)) {
 			warn("Could not write packet for file '%s'",
-			     stream->path.array);
+			     redacted_path);
 			error = true;
 			goto error;
 		}
 		obs_encoder_packet_release(pkt);
 	}
 
-	info("Wrote replay buffer to '%s'", stream->path.array);
+	info("Wrote replay buffer to '%s'", redacted_path);
 
 error:
 	os_process_pipe_destroy(stream->pipe);
@@ -1200,7 +1207,7 @@ error:
 			obs_output_get_signal_handler(stream->output);
 		signal_handler_signal(sh, "saved", &cd);
 	}
-
+    bfree(redacted_path);
 	return NULL;
 }
 

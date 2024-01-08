@@ -225,8 +225,10 @@ static void gs_image_file_init_internal(gs_image_file_t *image,
 
 	image->loaded = !!image->texture_data;
 	if (!image->loaded) {
-		blog(LOG_WARNING, "Failed to load file '%s'", file);
+        char *redacted_path = os_create_redacted_str(file);
+		blog(LOG_WARNING, "Failed to load file '%s'", redacted_path);
 		gs_image_file_free(image);
+        free(redacted_path);
 	}
 }
 

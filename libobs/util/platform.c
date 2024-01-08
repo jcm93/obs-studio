@@ -701,6 +701,20 @@ static void erase_ch(struct dstr *str, size_t pos)
 	*str = new_str;
 }
 
+char *os_create_redacted_str(const char *str)
+{
+    size_t len = strlen(str);
+    char *redacted_str = bmalloc(len + 1);
+    memcpy(redacted_str, str, len);
+    
+    char *username_ptr = os_get_username_ptr();
+    
+    struct dstr redacted_dstr;
+    dstr_init_move_array(&redacted_dstr, redacted_str);
+    dstr_replace(&redacted_dstr, username_ptr, "user");
+    return redacted_str;
+}
+
 char *os_generate_formatted_filename(const char *extension, bool space,
 				     const char *format)
 {

@@ -250,6 +250,9 @@ static void dump_source_info(struct ffmpeg_source *s, const char *input,
 {
 	if (!s->log_changes)
 		return;
+
+    char *redacted_path = os_create_redacted_str(input);
+
 	FF_BLOG(LOG_INFO,
 		"settings:\n"
 		"\tinput:                   %s\n"
@@ -263,7 +266,7 @@ static void dump_source_info(struct ffmpeg_source *s, const char *input,
 		"\tclose_when_inactive:     %s\n"
 		"\tfull_decode:             %s\n"
 		"\tffmpeg_options:          %s",
-		input ? input : "(null)",
+		redacted_path ? redacted_path : "(null)",
 		input_format ? input_format : "(null)", s->speed_percent,
 		s->is_looping ? "yes" : "no", s->is_linear_alpha ? "yes" : "no",
 		s->is_hw_decoding ? "yes" : "no",
@@ -271,6 +274,7 @@ static void dump_source_info(struct ffmpeg_source *s, const char *input,
 		s->restart_on_activate ? "yes" : "no",
 		s->close_when_inactive ? "yes" : "no",
 		s->full_decode ? "yes" : "no", s->ffmpeg_options);
+    bfree(redacted_path);
 }
 
 static void get_frame(void *opaque, struct obs_source_frame *f)
