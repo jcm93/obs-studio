@@ -524,6 +524,14 @@ static char *os_get_path_ptr_internal(const char *name, int folder)
 	return path.array;
 }
 
+char *os_get_username_ptr()
+{
+	DWORD len = 256;
+	char *username_ptr = bmalloc(len + 1);
+	GetUserName(username_ptr, &len);
+	return username_ptr;
+}
+
 int os_get_config_path(char *dst, size_t size, const char *name)
 {
 	return os_get_path_internal(dst, size, name, CSIDL_APPDATA);

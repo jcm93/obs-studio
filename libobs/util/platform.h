@@ -116,6 +116,9 @@ EXPORT char *os_get_program_data_path_ptr(const char *name);
 
 EXPORT char *os_get_executable_path_ptr(const char *name);
 
+EXPORT char *os_get_username_ptr(void);
+EXPORT char *os_create_redacted_str(const char *str);
+
 EXPORT bool os_file_exists(const char *path);
 
 EXPORT size_t os_get_abs_path(const char *path, char *abspath, size_t size);

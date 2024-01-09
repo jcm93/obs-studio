@@ -84,6 +84,19 @@ static char *os_get_path_ptr_internal(const char *name, NSSearchPathDomainMask d
     return path.array;
 }
 
+char *os_get_username_ptr()
+{
+    NSString *username_cocoa_string = NSUserName();
+
+    NSUInteger len = [username_cocoa_string lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    char *username_ptr = bmalloc(len + 1);
+    username_ptr[len] = 0;
+
+    memcpy(username_ptr, [username_cocoa_string UTF8String], len);
+
+    return username_ptr;
+}
+
 int os_get_config_path(char *dst, size_t size, const char *name)
 {
     return os_get_path_internal(dst, size, name, NSUserDomainMask);
