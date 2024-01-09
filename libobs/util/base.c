@@ -19,6 +19,8 @@
 
 #include "c99defs.h"
 #include "base.h"
+#include "platform.h"
+#include "bmem.h"
 
 static int crashing = 0;
 static void *log_param = NULL;
@@ -29,27 +31,30 @@ static void def_log_handler(int log_level, const char *format, va_list args,
 {
 	char out[4096];
 	vsnprintf(out, sizeof(out), format, args);
+	char *out_redacted = os_create_redacted_str(out);
 
 	switch (log_level) {
 	case LOG_DEBUG:
-		fprintf(stdout, "debug: %s\n", out);
+		fprintf(stdout, "debug: %s\n", out_redacted);
 		fflush(stdout);
 		break;
 
 	case LOG_INFO:
-		fprintf(stdout, "info: %s\n", out);
+		fprintf(stdout, "info: %s\n", out_redacted);
 		fflush(stdout);
 		break;
 
 	case LOG_WARNING:
-		fprintf(stdout, "warning: %s\n", out);
+		fprintf(stdout, "warning: %s\n", out_redacted);
 		fflush(stdout);
 		break;
 
 	case LOG_ERROR:
-		fprintf(stderr, "error: %s\n", out);
+		fprintf(stderr, "error: %s\n", out_redacted);
 		fflush(stderr);
 	}
+
+	bfree(out_redacted);
 
 	UNUSED_PARAMETER(param);
 }
