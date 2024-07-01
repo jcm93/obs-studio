@@ -100,6 +100,7 @@ API_AVAILABLE(macos(12.5)) static bool init_screen_stream(struct screen_capture 
             CGDisplayModeRef display_mode = CGDisplayCopyDisplayMode(target_display.displayID);
             [capture_data->stream_properties setWidth:CGDisplayModeGetPixelWidth(display_mode)];
             [capture_data->stream_properties setHeight:CGDisplayModeGetPixelHeight(display_mode)];
+			[capture_data->stream_properties setMinimumFrameInterval:CMTimeMake(1 * 1000, (int)(CGDisplayModeGetRefreshRate(display_mode)*1000))];
             CGDisplayModeRelease(display_mode);
         };
 
@@ -160,6 +161,12 @@ API_AVAILABLE(macos(12.5)) static bool init_screen_stream(struct screen_capture 
 
                 [sc->stream_properties setWidth:(size_t) target_window.frame.size.width];
                 [sc->stream_properties setHeight:(size_t) target_window.frame.size.height];
+				if (@available(macOS 14.0, *)) {
+					[sc->stream_properties setIgnoreShadowsSingleWindow:NO];
+					[sc->stream_properties setIgnoreGlobalClipSingleWindow:NO];
+				} else {
+					// Fallback on earlier versions
+				}
 
                 if (@available(macOS 14.2, *)) {
                     [sc->stream_properties setIncludeChildWindows:YES];
@@ -204,6 +211,7 @@ API_AVAILABLE(macos(12.5)) static bool init_screen_stream(struct screen_capture 
     [sc->stream_properties setQueueDepth:8];
     [sc->stream_properties setShowsCursor:!sc->hide_cursor];
     [sc->stream_properties setColorSpaceName:kCGColorSpaceDisplayP3];
+	[sc->stream_properties setMinimumFrameInterval:CMTimeMake(1, 121)];
     [sc->stream_properties setBackgroundColor:background];
     FourCharCode l10r_type = 0;
     l10r_type = ('l' << 24) | ('1' << 16) | ('0' << 8) | 'r';
