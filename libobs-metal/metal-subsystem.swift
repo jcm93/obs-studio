@@ -641,27 +641,16 @@ public func device_is_present_ready(device: UnsafeRawPointer) -> Bool {
 public func device_present(device: UnsafeRawPointer) {
     let device = Unmanaged<MetalDevice>.fromOpaque(device).takeUnretainedValue()
 
-    guard let layerId = device.state.layerId, var layer = device.layers[layerId], let drawable = layer.nextDrawable
-    else {
-        preconditionFailure("device_present (Metal): No drawable for layer available")
-    }
-
     if device.state.numDraws == 0 {
         device.clear()
     }
 
-    defer {
-        device.state.commandBuffer = nil
-        device.state.numDraws = 0
-
-        layer.nextDrawable = nil
-        device.layers.replaceAt(layerId, layer)
+    guard let layerId = device.state.layerId, var layer = device.layers[layerId] else {
+        preconditionFailure("device_present (Metal): Couldn't get current layer")
     }
-
-    device.state.commandBuffer?.present(drawable)
-
+    
     weak var weakDevice = device
-
+    
     device.state.commandBuffer?.addCompletedHandler { _ in
         if let device = weakDevice {
             device.queue.sync(flags: .barrier) {
@@ -675,7 +664,29 @@ public func device_present(device: UnsafeRawPointer) {
             }
         }
     }
+    
+    defer {
+        device.state.commandBuffer = nil
+        device.state.numDraws = 0
 
+        layer.nextDrawable = nil
+        device.layers.replaceAt(layerId, layer)
+    }
+    
+    guard device.currentDrawablesInFlight < device.maxDrawablesInFlight else {
+        device.state.commandBuffer?.commit()
+        return
+    }
+    guard let drawable = layer.nextDrawable else {
+        preconditionFailure("device_present (Metal): No drawable for layer available")
+    }
+    
+    device.currentDrawablesInFlight += 1
+    drawable.addPresentedHandler({_ in
+        device.currentDrawablesInFlight -= 1
+    })
+    
+    device.state.commandBuffer?.present(drawable)
     device.state.commandBuffer?.commit()
 }
 

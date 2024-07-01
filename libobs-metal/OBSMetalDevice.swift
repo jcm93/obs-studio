@@ -100,6 +100,9 @@ class MetalDevice {
     var surfaces = OBSResourceCollection<(NSView, CAMetalLayer)>(8)
     var shaders = OBSResourceCollection<MetalShader>(64)
     var layers = OBSResourceCollection<MetalLayer>(8)
+    
+    var currentDrawablesInFlight: UInt32 = 0
+    let maxDrawablesInFlight: UInt32 = 3
 
     var currentBuffers = [MTLBuffer]()
     var availableBuffers = [MTLBuffer]()
