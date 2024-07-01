@@ -2,6 +2,7 @@
 
 uniform float4x4 ViewProj;
 uniform texture_rect image;
+uniform float     hlg_exponent;
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -35,6 +36,13 @@ float4 PSDrawD65P3(VertInOut vert_in) : TARGET
 	return rgba;
 }
 
+float4 PSDrawP3HLG(VertInOut vert_in) : TARGET
+{
+	float4 rgba = image.Sample(def_sampler, vert_in.uv);
+	rgba.rgb = hlg_to_linear(rgba.rgb, hlg_exponent);
+	return rgba;
+}
+
 float4 PSDrawOpaque(VertInOut vert_in) : TARGET
 {
 	return float4(image.Sample(def_sampler, vert_in.uv).rgb, 1.0);
@@ -62,6 +70,15 @@ technique DrawD65P3
 	{
 		vertex_shader = VSDefault(vert_in);
 		pixel_shader  = PSDrawD65P3(vert_in);
+	}
+}
+
+technique DrawP3HLG
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSDrawP3HLG(vert_in);
 	}
 }
 

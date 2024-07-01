@@ -84,6 +84,11 @@ API_AVAILABLE(macos(12.5)) static bool init_screen_stream(struct screen_capture 
 
     sc->frame = CGRectZero;
     sc->stream_properties = [[SCStreamConfiguration alloc] init];
+	if (@available(macOS 15.0, *)) {
+		sc->stream_properties.captureDynamicRange = SCCaptureDynamicRangeHDRLocalDisplay;
+	} else {
+		// Fallback on earlier versions
+	}
     os_sem_wait(sc->shareable_content_available);
 
     SCDisplayRef (^get_target_display)(void) = ^SCDisplayRef {
@@ -203,7 +208,7 @@ API_AVAILABLE(macos(12.5)) static bool init_screen_stream(struct screen_capture 
     CGColorRef background = CGColorGetConstantColor(kCGColorClear);
     [sc->stream_properties setQueueDepth:8];
     [sc->stream_properties setShowsCursor:!sc->hide_cursor];
-    [sc->stream_properties setColorSpaceName:kCGColorSpaceDisplayP3];
+	[sc->stream_properties setColorSpaceName:kCGColorSpaceDisplayP3_HLG];
     [sc->stream_properties setBackgroundColor:background];
     FourCharCode l10r_type = 0;
     l10r_type = ('l' << 24) | ('1' << 16) | ('0' << 8) | 'r';
@@ -353,8 +358,12 @@ API_AVAILABLE(macos(12.5)) static void sck_video_capture_render(void *data, gs_e
 
     gs_eparam_t *param = gs_effect_get_param_by_name(sc->effect, "image");
     gs_effect_set_texture(param, sc->tex);
+	
+	const float hlg_exponent =
+		0.2f + (0.42f * log10f(1600.f / 1000.f));
+	set_eparam(conv, "hlg_exponent", hlg_exponent);
 
-    while (gs_effect_loop(sc->effect, "DrawD65P3"))
+    while (gs_effect_loop(sc->effect, "DrawP3HLG"))
         gs_draw_sprite(sc->tex, 0, 0, 0);
 
     gs_enable_framebuffer_srgb(previous);
