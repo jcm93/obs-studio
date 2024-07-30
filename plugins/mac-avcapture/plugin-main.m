@@ -79,6 +79,10 @@ static obs_properties_t *av_capture_properties(void *av_capture)
 {
     OBSAVCapture *capture = (__bridge OBSAVCapture *) (av_capture);
     OBSAVCaptureInfo *capture_info = capture.captureInfo;
+  
+    if (@available(macOS 15.0, *)) {
+      [capture AVCaptureLog:LOG_WARNING withFormat:@"15 availability CI test"];
+    }
 
     obs_properties_t *properties = obs_properties_create();
 
