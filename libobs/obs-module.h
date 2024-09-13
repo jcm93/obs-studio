@@ -149,6 +149,8 @@ MODULE_EXPORT bool obs_module_get_string(const char *lookup_string,
 /** Helper function that returns the current module */
 MODULE_EXTERN obs_module_t *obs_current_module(void);
 
+void obs_add_module_to_load_order(struct obs_module *mod);
+
 /**
  * Returns the location to a module data file associated with the current
  * module.  Free with bfree when complete.  Equivalent to:

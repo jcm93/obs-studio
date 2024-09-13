@@ -117,8 +117,6 @@ int obs_open_module(obs_module_t **module, const char *path,
 	}
 #endif
 
-	blog(LOG_DEBUG, "---------------------------------");
-
 	mod.module = os_dlopen(path);
 	if (!mod.module) {
 		blog(LOG_WARNING, "Module '%s' not loaded", path);
@@ -135,10 +133,6 @@ int obs_open_module(obs_module_t **module, const char *path,
 	mod.mod_name = get_module_name(mod.file);
 	mod.data_path = bstrdup(data_path);
 	mod.next = obs->first_module;
-
-	if (mod.file) {
-		blog(LOG_DEBUG, "Loading module: %s", mod.file);
-	}
 
 	*module = bmemdup(&mod, sizeof(mod));
 	obs->first_module = (*module);
@@ -359,8 +353,7 @@ static void load_all_callback(void *param, const struct obs_module_info2 *info)
 		return;
 	}
 
-	if (!obs_init_module(module))
-		free_module(module);
+	obs_add_module_to_load_order(module);
 
 	UNUSED_PARAMETER(param);
 	return;
@@ -392,6 +385,29 @@ void obs_load_all_modules(void)
 
 static const char *obs_load_all_modules2_name = "obs_load_all_modules2";
 
+void obs_add_module_to_load_order(struct obs_module *mod)
+{
+	if (astrcmpi_n(mod->mod_name, "obs-browser", 11) == 0) {
+		da_insert(obs->module_load_order, 0, mod);
+	} else {
+		da_push_back(obs->module_load_order, mod);
+	}
+}
+
+void obs_init_modules()
+{
+	size_t index = 0;
+	while (index < obs->module_load_order.num) {
+		obs_module_t *mod = obs->module_load_order.array + index;
+		blog(LOG_DEBUG, "---------------------------------");
+		blog(LOG_DEBUG, "Loading module: %s", mod->file);
+		if (!obs_init_module(mod)) {
+			free_module(mod);
+		}
+		index++;
+	}
+}
+
 void obs_load_all_modules2(struct obs_module_failure_info *mfi)
 {
 	struct fail_info fail_info = {0};
@@ -399,6 +415,7 @@ void obs_load_all_modules2(struct obs_module_failure_info *mfi)
 
 	profile_start(obs_load_all_modules2_name);
 	obs_find_modules2(load_all_callback, &fail_info);
+	obs_init_modules();
 #ifdef _WIN32
 	profile_start(reset_win32_symbol_paths_name);
 	reset_win32_symbol_paths();

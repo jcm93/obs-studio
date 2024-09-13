@@ -479,6 +479,7 @@ struct obs_core {
 	struct obs_module *first_module;
 	DARRAY(struct obs_module_path) module_paths;
 	DARRAY(char *) safe_modules;
+	DARRAY(struct obs_module) module_load_order;
 
 	obs_source_info_array_t source_types;
 	obs_source_info_array_t input_types;
