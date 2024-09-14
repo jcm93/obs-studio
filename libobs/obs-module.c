@@ -304,73 +304,98 @@ static bool is_safe_module(const char *name)
 	return false;
 }
 
-static void load_all_callback(void *param, const struct obs_module_info2 *info)
+void obs_add_module_to_load_order(struct obs_module_info2 *mod)
 {
-	struct fail_info *fail_info = param;
-	obs_module_t *module;
-
-	bool is_obs_plugin;
-	bool can_load_obs_plugin;
-
-	get_plugin_info(info->bin_path, &is_obs_plugin, &can_load_obs_plugin);
-
-	if (!is_obs_plugin) {
-		blog(LOG_WARNING, "Skipping module '%s', not an OBS plugin",
-		     info->bin_path);
-		return;
+	if (astrcmpi_n(mod->name, "obs-browser", 11) == 0) {
+		da_insert(obs->module_load_order, 0, mod);
+	} else {
+		da_push_back(obs->module_load_order, mod);
 	}
+}
 
-	if (!is_safe_module(info->name)) {
-		blog(LOG_WARNING, "Skipping module '%s', not on safe list",
-		     info->name);
-		return;
+void obs_init_modules(struct fail_info *fail_info)
+{
+	for (size_t index = 0; index < obs->module_load_order.num; index++) {
+		struct obs_module_info2 *info =
+			obs->module_load_order.array + index;
+		obs_module_t *module;
+
+		bool is_obs_plugin;
+		bool can_load_obs_plugin;
+
+		get_plugin_info(info->bin_path, &is_obs_plugin,
+				&can_load_obs_plugin);
+
+		if (!is_obs_plugin) {
+			blog(LOG_WARNING,
+			     "Skipping module '%s', not an OBS plugin",
+			     info->bin_path);
+			continue;
+		}
+
+		if (!is_safe_module(info->name)) {
+			blog(LOG_WARNING,
+			     "Skipping module '%s', not on safe list",
+			     info->name);
+			continue;
+		}
+
+		if (!can_load_obs_plugin) {
+			blog(LOG_WARNING,
+			     "Skipping module '%s' due to possible "
+			     "import conflicts",
+			     info->bin_path);
+			goto load_failure;
+		}
+
+		int code = obs_open_module(&module, info->bin_path,
+					   info->data_path);
+		switch (code) {
+		case MODULE_MISSING_EXPORTS:
+			blog(LOG_DEBUG,
+			     "Failed to load module file '%s', not an OBS plugin",
+			     info->bin_path);
+			continue;
+		case MODULE_FILE_NOT_FOUND:
+			blog(LOG_DEBUG,
+			     "Failed to load module file '%s', file not found",
+			     info->bin_path);
+			continue;
+		case MODULE_ERROR:
+			blog(LOG_DEBUG, "Failed to load module file '%s'",
+			     info->bin_path);
+			goto load_failure;
+		case MODULE_INCOMPATIBLE_VER:
+			blog(LOG_DEBUG,
+			     "Failed to load module file '%s', incompatible version",
+			     info->bin_path);
+			goto load_failure;
+		case MODULE_HARDCODED_SKIP:
+			continue;
+		}
+
+		if (!obs_init_module(module))
+			free_module(module);
+
+		continue;
+
+	load_failure:
+		if (fail_info) {
+			dstr_cat(&fail_info->fail_modules, info->name);
+			dstr_cat(&fail_info->fail_modules, ";");
+			fail_info->fail_count++;
+		}
 	}
+}
 
-	if (!can_load_obs_plugin) {
-		blog(LOG_WARNING,
-		     "Skipping module '%s' due to possible "
-		     "import conflicts",
-		     info->bin_path);
-		goto load_failure;
-	}
-
-	int code = obs_open_module(&module, info->bin_path, info->data_path);
-	switch (code) {
-	case MODULE_MISSING_EXPORTS:
-		blog(LOG_DEBUG,
-		     "Failed to load module file '%s', not an OBS plugin",
-		     info->bin_path);
-		return;
-	case MODULE_FILE_NOT_FOUND:
-		blog(LOG_DEBUG,
-		     "Failed to load module file '%s', file not found",
-		     info->bin_path);
-		return;
-	case MODULE_ERROR:
-		blog(LOG_DEBUG, "Failed to load module file '%s'",
-		     info->bin_path);
-		goto load_failure;
-	case MODULE_INCOMPATIBLE_VER:
-		blog(LOG_DEBUG,
-		     "Failed to load module file '%s', incompatible version",
-		     info->bin_path);
-		goto load_failure;
-	case MODULE_HARDCODED_SKIP:
-		return;
-	}
-
-	if (!obs_init_module(module))
-		free_module(module);
-
-	UNUSED_PARAMETER(param);
-	return;
-
-load_failure:
-	if (fail_info) {
-		dstr_cat(&fail_info->fail_modules, info->name);
-		dstr_cat(&fail_info->fail_modules, ";");
-		fail_info->fail_count++;
-	}
+static void load_all_callback(void *param __unused,
+			      const struct obs_module_info2 *info)
+{
+	struct obs_module_info2 mod2;
+	mod2.name = bstrdup(info->name);
+	mod2.bin_path = bstrdup(info->bin_path);
+	mod2.data_path = bstrdup(info->data_path);
+	obs_add_module_to_load_order(&mod2);
 }
 
 static const char *obs_load_all_modules_name = "obs_load_all_modules";
@@ -399,6 +424,7 @@ void obs_load_all_modules2(struct obs_module_failure_info *mfi)
 
 	profile_start(obs_load_all_modules2_name);
 	obs_find_modules2(load_all_callback, &fail_info);
+	obs_init_modules(&fail_info);
 #ifdef _WIN32
 	profile_start(reset_win32_symbol_paths_name);
 	reset_win32_symbol_paths();
