@@ -1220,10 +1220,6 @@ static OBSFrameRatePropertyWidget *CreateFrameRateWidget(obs_property_t *prop, b
 	if (option_found)
 		stack->setCurrentIndex(stack->count() - 1);
 	else if (!match_found) {
-		int idx = current_fps ? 1 : 0; // Rational for "unsupported"
-					       // Simple as default
-		stack->setCurrentIndex(idx);
-		combo->setCurrentIndex(idx);
 		warning = true;
 	}
 
