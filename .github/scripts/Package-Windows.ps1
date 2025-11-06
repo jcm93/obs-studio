@@ -53,8 +53,10 @@ function Package {
 
     if ( $CommitDistance -gt 0 ) {
         $OutputName = "obs-studio-${CommitVersion}-${CommitHash}"
+        $DevOutputName = "libobs-frontend-api-${CommitVersion}-${CommitHash}"
     } else {
         $OutputName = "obs-studio-${CommitVersion}"
+        $DevOutputName = "libobs-frontend-api-${CommitVersion}"
     }
 
     $CpackArgs = @(
@@ -75,6 +77,33 @@ function Package {
     Move-Item -Path $Package -Destination "${OutputName}-windows-${Target}.zip"
 
     Pop-Location -Stack PackageTemp
+
+    Log-Group "Packaging libobs and frontend-api..."
+
+    New-Item -Path "dev-components" -ItemType Directory
+    Push-Location -Stack DevPackageTemp "dev-components"
+
+    $DevComponentsCmakeArgs += @(
+        '--install', "../build_${Target}"
+        '--prefix', "."
+        '--component', "Development"
+    )
+
+    Invoke-External cmake @DevComponentsCmakeArgs
+
+    $ArchiveFileName = "${DevOutputName}.zip"
+
+    $Params = @{
+        Path = (Get-ChildItem -Exclude $ArchiveFileName)
+        DestinationPath = $ArchiveFileName
+        CompressionLevel = "Optimal"
+    }
+
+    Compress-Archive @Params
+
+    Move-Item -Force -Path $ArchiveFileName -Destination (Split-Path -Parent (Get-Location))
+
+    Pop-Location -Stack DevPackageTemp
 }
 
 Package

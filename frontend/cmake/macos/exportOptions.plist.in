@@ -5,10 +5,10 @@
 	<key>method</key>
 	<string>developer-id</string>
 	<key>signingStyle</key>
-	<string>manual</string>
+	<string>automatic</string>
 	<key>signingCertificate</key>
 	<string>Developer ID Application</string>
 	<key>teamID</key>
-	<string>${OBS_CODESIGN_TEAM}</string>
+	<string>-</string>
 </dict>
 </plist>
