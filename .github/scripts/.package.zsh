@@ -122,8 +122,10 @@ package() {
   local output_name
   if (( commit_distance > 0 )) {
     output_name="obs-studio-${commit_version}-${commit_hash}"
+    dev_output_name="libobs-frontend-api-${commit_version}-${commit_hash}"
   } else {
     output_name="obs-studio-${commit_version}"
+    dev_output_name="libobs-frontend-api-${commit_version}"
   }
 
   if [[ ${host_os} == macos ]] {
@@ -134,6 +136,7 @@ package() {
 
     local -A arch_names=(x86_64 Intel arm64 Apple)
     output_name="${output_name}-macos-${(L)arch_names[${target##*-}]}"
+    dev_output_name="${dev_output_name}-macos-${(L)arch_names[${target##*-}]}"
 
     local volume_name
     if (( commit_distance > 0 )) {
@@ -205,6 +208,14 @@ package() {
       mv ${output_name}-dSYMs.tar.xz ${PWD:h}
       popd
     }
+
+    log_group "Packaging libobs and frontend-api..."
+    mkdir -p ${project_root}/dev-components
+    pushd ${project_root}/dev-components
+    cmake --install ../build_macos --prefix . --component Development
+    XZ_OPT=-T0 tar -cvJf ${dev_output_name}.tar.xz -- *
+    mv ${dev_output_name}-dSYMs.tar.xz ${PWD:h}
+    popd
 
     log_group
 

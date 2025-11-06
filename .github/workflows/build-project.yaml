@@ -132,7 +132,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           config: ${{ needs.check-event.outputs.config }}
-          codesign: ${{ fromJSON(needs.check-event.outputs.codesign) }}
+          codesign: false
           codesignIdent: ${{ steps.codesign.outputs.codesignIdent }}
           codesignTeam: ${{ steps.codesign.outputs.codesignTeam }}
           provisioningProfileUUID: ${{ steps.codesign.outputs.provisioningProfileUUID }}
@@ -143,17 +143,23 @@ jobs:
           target: ${{ matrix.target }}
           config: ${{ needs.check-event.outputs.config }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
-          codesign: ${{ fromJSON(needs.check-event.outputs.codesign) && fromJSON(steps.codesign.outputs.haveCodesignIdent) }}
+          codesign: false
           codesignIdent: ${{ steps.codesign.outputs.codesignIdent }}
           notarize: ${{ fromJSON(needs.check-event.outputs.notarize) && fromJSON(steps.codesign.outputs.haveNotarizationUser) }}
           codesignUser: ${{ secrets.MACOS_NOTARIZATION_USERNAME }}
           codesignPass: ${{ secrets.MACOS_NOTARIZATION_PASSWORD }}
 
-      - name: Upload Artifacts 📡
+      - name: Upload OBS Studio Artifacts 📡
         uses: actions/upload-artifact@v4
         with:
           name: obs-studio-macos-${{ matrix.target }}-${{ needs.check-event.outputs.commitHash }}
           path: ${{ github.workspace }}/build_macos/obs-studio-*-macos-${{ steps.setup.outputs.cpuName }}.*
+
+      - name: Upload libobs and frontend-api Artifacts 📡
+        uses: actions/upload-artifact@v4
+        with:
+          name: libobs-frontend-api-macos-${{ matrix.target }}-${{ needs.check-event.outputs.commitHash }}
+          path: ${{ github.workspace }}/build_macos/libobs-frontend-api-*-macos-${{ steps.setup.outputs.cpuName }}.*
 
       - name: Upload Debug Symbol Artifacts 🪲
         uses: actions/upload-artifact@v4
@@ -362,8 +368,14 @@ jobs:
           config: ${{ needs.check-event.outputs.config }}
           package: ${{ fromJSON(needs.check-event.outputs.package) }}
 
-      - name: Upload Artifacts 📡
+      - name: Upload OBS Studio Artifacts 📡
         uses: actions/upload-artifact@v4
         with:
           name: obs-studio-windows-${{ matrix.architecture }}-${{ needs.check-event.outputs.commitHash }}
           path: ${{ github.workspace }}/build_${{ matrix.architecture }}/obs-studio-*-windows-${{ matrix.architecture }}.zip
+
+      - name: Upload libobs and frontend-api Artifacts 📡
+        uses: actions/upload-artifact@v4
+        with:
+          name: libobs-frontend-api-windows-${{ matrix.architecture }}-${{ needs.check-event.outputs.commitHash }}
+          path: ${{ github.workspace }}/libobs-frontend-api-*-windows-${{ matrix.architecture }}.zip
