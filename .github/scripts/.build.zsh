@@ -170,12 +170,12 @@ build() {
         archive
       )
 
-      local -a export_args=(
-        -exportArchive
-        -archivePath obs-studio.xcarchive
-        -exportOptionsPlist exportOptions.plist
-        -exportPath ${project_root}/build_macos
-      )
+      # local -a export_args=(
+      #   -exportArchive
+      #   -archivePath obs-studio.xcarchive
+      #   -exportOptionsPlist exportOptions.plist
+      #   -exportPath ${project_root}/build_macos
+      # )
 
       local -a analyze_args=(
         CLANG_ANALYZER_OUTPUT=sarif
@@ -195,7 +195,7 @@ build() {
       } else {
         if [[ ${GITHUB_EVENT_NAME} == push && ${GITHUB_REF_NAME} =~ [0-9]+.[0-9]+.[0-9]+(-(rc|beta).+)? ]] {
           run_xcodebuild ${archive_args}
-          run_xcodebuild ${export_args}
+          # run_xcodebuild ${export_args}
         } else {
           run_xcodebuild ${build_args}
 
