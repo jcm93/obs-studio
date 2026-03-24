@@ -11,6 +11,7 @@ extern struct obs_source_info coreaudio_input_capture_info;
 extern struct obs_source_info coreaudio_output_capture_info;
 extern struct obs_source_info display_capture_info;
 extern struct obs_source_info window_capture_info;
+extern struct obs_source_info create_catap_source() WEAK_IMPORT_ATTRIBUTE;
 
 extern bool is_screen_capture_available() WEAK_IMPORT_ATTRIBUTE;
 
@@ -23,8 +24,14 @@ bool obs_module_load(void)
 			display_capture_info.output_flags |= OBS_SOURCE_DEPRECATED;
 			window_capture_info.output_flags |= OBS_SOURCE_DEPRECATED;
 			coreaudio_output_capture_info.output_flags |= OBS_SOURCE_DEPRECATED;
-			extern struct obs_source_info sck_audio_capture_info;
-			obs_register_source(&sck_audio_capture_info);
+      if (__builtin_available(macOS 14.2, *)) {
+        struct obs_source_info catap_audio_capture_info = create_catap_source(); //todo: create_catap_source() creates the source without populating `const char *id` because I haven't figured out a safe/clean way to assign to `const char *` in Swift
+        catap_audio_capture_info.id = "catap_audio_capture";
+        obs_register_source(&catap_audio_capture_info);
+      } else {
+        extern struct obs_source_info sck_audio_capture_info;
+        obs_register_source(&sck_audio_capture_info);
+      }
 		}
 	}
 	obs_register_source(&display_capture_info);

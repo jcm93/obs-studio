@@ -11,6 +11,11 @@
 #include <CoreMedia/CMSampleBuffer.h>
 #include <CoreVideo/CVPixelBuffer.h>
 
+#include <CoreAudio/CoreAudio.h>
+#include <CoreAudio/CATapDescription.h>
+#include <CoreAudio/AudioHardwareTapping.h>
+#include <AudioToolbox/AudioToolbox.h>
+
 #define MACCAP_LOG(level, msg, ...) blog(level, "[ mac-screencapture ]: " msg, ##__VA_ARGS__)
 #define MACCAP_ERR(msg, ...)        MACCAP_LOG(LOG_ERROR, msg, ##__VA_ARGS__)
 
@@ -64,6 +69,23 @@ struct API_AVAILABLE(macos(12.5)) screen_capture {
     CGDirectDisplayID display;
     CGWindowID window;
     NSString *application_id;
+};
+
+typedef enum : NSUInteger {
+  mono,
+  stereo
+} TapMixdown;
+
+struct API_AVAILABLE(macos(12.0)) catap_capture {
+  NSString *name;
+  NSSet *processes; //AudioObjectID
+  bool isPrivate;
+  bool isProcessRestoreEnabled;
+  TapMixdown mixdown;
+  bool exclusive;
+  NSString *device;
+  NSUInteger streamIndex;
+  AudioObjectID tapID;
 };
 
 bool is_screen_capture_available(void);

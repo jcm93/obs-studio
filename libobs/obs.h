@@ -34,6 +34,7 @@
 #include "obs-data.h"
 #include "obs-properties.h"
 #include "obs-interaction.h"
+#include <swift/bridging>
 
 struct matrix4;
 

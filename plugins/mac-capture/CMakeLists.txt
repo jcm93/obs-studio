@@ -20,6 +20,22 @@ target_sources(
     window-utils.m
 )
 
+enable_language(Swift)
+
+target_sources(
+  mac-capture
+  PRIVATE
+    CATap-Audio-Capture.swift
+    Swift-Bridge.h
+)
+
+set_target_properties(
+  mac-capture
+  PROPERTIES
+  XCODE_ATTRIBUTE_SWIFT_OBJC_BRIDGING_HEADER
+    "${CMAKE_CURRENT_SOURCE_DIR}/Swift-Bridge.h"
+)
+
 target_link_libraries(
   mac-capture
   PRIVATE
